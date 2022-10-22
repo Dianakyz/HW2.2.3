@@ -1,3 +1,5 @@
+import transport.Car;
+
 public class Main {
     public static void main(String[] args) {
         Car lada = new Car(  "Lada", null , 1.7 , null,  0, null);
