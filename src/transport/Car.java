@@ -1,76 +1,62 @@
 package transport;
 
-public class Car {
-    private final String brand;
-    private final String model;
+import javax.xml.validation.Validator;
+import java.io.ObjectInputValidation;
+import java.time.LocalDate;
+
+import static jdk.nashorn.internal.runtime.JSType.isNumber;
+
+public class Car extends Transport {
     private double engineVolume;
-    private String color;
-    private final int prodactionYear;
-    private final String prodactionCountry;
     private String gearBox;
     private final String bodeType;
     private String registrationNumber;
     private final int seats;
     private boolean summerRubber;
 
-    public Car(String brand, String model, double engineVolume, String color, int prodactionYear, String prodactionCountry){
-        if (brand == null){
-            this.brand = "default";
-        } else {
-            this.brand = brand;
+    public static class Key {
+        private final boolean remoteEngineStart;
+        private final boolean keyLessAccess;
+
+        public Key(boolean remoteEngineStart, boolean keyLessAccess){
+            this.remoteEngineStart = remoteEngineStart;
+            this.keyLessAccess = keyLessAccess;
         }
 
-        if (model == null){
-            this.model = "default";
-        } else {
-            this.model = model;
+        public boolean isRemoteEngineStart() {
+            return remoteEngineStart;
         }
 
-        if (prodactionCountry == null){
-            this.prodactionCountry = "default";
-        } else {
-            this.prodactionCountry = prodactionCountry;
+        public boolean isKeyLessAccess() {
+            return keyLessAccess;
         }
-
-        if(Double.compare(engineVolume,0) == 0){
-            this.engineVolume = 1.5;
-        } else {
-            this.engineVolume = engineVolume;
-        }
-
-        if(color == null){
-            this.color = "белый";
-        } else {
-            this.color = color;
-        }
-
-        if(prodactionYear == 0){
-            this.prodactionYear = 2000;
-        } else {
-            this.prodactionYear = prodactionYear;
-        }
-
-        this.gearBox = "механика";
-        this.bodeType = "седан";
-        this.registrationNumber = "х000х000";
-        this.seats = 4;
-        this.summerRubber = true;
     }
 
-    public String getBrand() {
-        return brand;
+    public static class Insurance {
+        private final LocalDate validUntil;
+        private final float cost;
+        private final String number;
+
+        public Insurance(LocalDate validUntil, float cost, String number){
+            this.validUntil = validUntil != null ? validUntil : LocalDate.now().plusDays(10);
+            this.cost = Math.max(cost,1f);
+            if (number == null) {
+                this.number = "default";
+            } else {
+                this.number = number;
+            }
+        }
     }
 
-    public String getModel() {
-        return model;
-    }
+    public Car(String brand, String model, int prodactionYear, String prodactionCountry, String color, int maxSpeed, double engineVolume, String gearBox, String bodeType, String registrationNumber, int seats, boolean summerRubber){
+        super(brand,model, prodactionYear, prodactionCountry, color, maxSpeed);
+        this.bodeType = ValidationUtils.validOrDefault(bodeType, "седан");
+        this.seats = Math.max(seats,1);
 
-    public int getProdactionYear() {
-        return prodactionYear;
-    }
-
-    public String getProdactionCountry() {
-        return prodactionCountry;
+        setEngineVolume(engineVolume);
+        setGearBox(gearBox);
+        setRegistrationNumber(registrationNumber);
+        setSummerRubber(summerRubber);
     }
 
     public String getBodeType() {
@@ -86,15 +72,11 @@ public class Car {
     }
 
     public void setEngineVolume(double engineVolume) {
-        this.engineVolume = engineVolume;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
+        if(Double.compare(engineVolume,0) == 0){
+            this.engineVolume = 1.5;
+        } else {
+            this.engineVolume = engineVolume;
+        }
     }
 
     public String getGearBox() {
@@ -118,12 +100,44 @@ public class Car {
     }
 
     public void carInfo(){
-        System.out.println("Марка авто: " + brand + ". Модель: " + model + ". Объем двигателя: " + engineVolume + ". Цвет кузова: " + color + ". Год производства: " + prodactionYear + ". Страна сборки: " + prodactionCountry + ".");
+        System.out.println("Марка авто: " + brand + ". Модель: " + model + ". Объем двигателя: " + engineVolume + ". Цвет кузова: " + color + ". Год производства: " + prodactionYear + ". Страна сборки: " + prodactionCountry + "." +
+                "Тип еоробки передач: " + gearBox + ". Тип кузова: " + bodeType + ". Регистрационный номер: " + registrationNumber + ". Количество сидений: " + seats + ". Резина летняя: " + summerRubber);
     }
 
     public void changeRubber(){
         summerRubber = !summerRubber;
     }
-}
 
-//очень длинно и сложно. я сдаюсь. как делать - поняла. Но раз тут без проверки, то подклассы пропущу
+    public boolean isRegValid(){
+        if (this.registrationNumber.length() != 9){
+            return false;
+        }
+        char[] regNumberChars = this.registrationNumber.toCharArray();
+        return isNumberLetter(regNumberChars[0])
+                && isNumber(regNumberChars[1])
+                && isNumber(regNumberChars[2])
+                && isNumber(regNumberChars[3])
+                && isNumber(regNumberChars[4])
+                && isNumber(regNumberChars[5])
+                && isNumber(regNumberChars[6])
+                && isNumber(regNumberChars[7])
+                && isNumber(regNumberChars[8]);
+    }
+
+    private  boolean isNumber(char symbol) {
+        return Character.isDigit(symbol);
+    }
+
+    private boolean isNumberLetter(char symbol){
+        String allowedSymbols = "АВЕКМНОРСТУХ";
+        return allowedSymbols.contains("" + symbol);
+    }
+
+    public void setSummerRubber(boolean summerRubber) {
+        this.summerRubber = summerRubber;
+    }
+
+    public void refill (){
+        System.out.println("Информация по заправке автомобилей: можно заправлять бензином, дизелем на заправке или заряжать на специальных электропарковках, если это электрокар.");
+    }
+}
